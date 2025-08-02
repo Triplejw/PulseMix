@@ -8,9 +8,6 @@
 - 🎧 Real-time waveform visualization
 - 🛠️ Built using PortAudio, libsndfile, and GTK
 
-## 📸 Screenshots
-*(Add screenshots of your app UI here)*
-
 ## 🚀 Getting Started
 
 ### Prerequisites
