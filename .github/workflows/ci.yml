@@ -1,0 +1,66 @@
+name: Build and test
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  workbench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build API tests (cached)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.api
+          target: api-test
+          tags: pulsemix-api-test:ci
+          load: true
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+      - name: Test API and native processing
+        run: docker run --rm pulsemix-api-test:ci
+      - name: Build web and type-check (cached)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.web
+          target: web
+          tags: pulsemix-web:local
+          load: true
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+      - name: Start workbench
+        run: docker compose up -d --build --wait
+      - name: Build browser test image (cached)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.web
+          target: web-test
+          tags: pulsemix-web-test:latest
+          load: true
+          cache-from: type=gha,scope=browser
+          cache-to: type=gha,mode=max,scope=browser
+      - name: Browser workflow and native/WASM parity
+        run: docker compose --profile test run --name pulsemix-e2e --no-deps web-test
+      - name: Collect browser artifacts
+        if: failure()
+        run: docker cp pulsemix-e2e:/app/test-results ./test-results || true
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-failure-artifacts
+          path: test-results
+          if-no-files-found: ignore
+      - name: Container logs
+        if: failure()
+        run: docker compose logs
+      - name: Stop containers
+        if: always()
+        run: docker compose down -v --remove-orphans

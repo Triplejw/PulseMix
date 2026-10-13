@@ -1,0 +1,13 @@
+.git
+.env
+.DS_Store
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/test-results
+**/playwright-report
+build
+data
+web/dist
+web/public/dsp.js
+web/public/dsp.wasm

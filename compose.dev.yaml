@@ -1,0 +1,26 @@
+# Layer on top of compose.yaml: docker compose -f compose.yaml -f compose.dev.yaml up --build
+services:
+  api:
+    image: pulsemix-api:dev
+    build:
+      target: api-dev
+    volumes:
+      - ./api/app:/app/app:ro
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  web:
+    image: pulsemix-web:dev
+    build:
+      target: web-dev
+    environment:
+      API_URL: http://api:8000
+      VITE_USE_POLLING: "true"
+    # Mount source folders, not all of /app: retain container node_modules and generated WASM.
+    volumes:
+      - ./web/src:/app/src:ro
+      - ./web/index.html:/app/index.html:ro
+    ports: !override
+      - "127.0.0.1:5173:5173"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5173/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
