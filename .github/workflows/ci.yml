@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
       - name: Build API tests (cached)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/Dockerfile.api
@@ -26,7 +26,7 @@ jobs:
       - name: Test API and native processing
         run: docker run --rm pulsemix-api-test:ci
       - name: Build web and type-check (cached)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/Dockerfile.web
@@ -38,7 +38,7 @@ jobs:
       - name: Start workbench
         run: docker compose up -d --build --wait
       - name: Build browser test image (cached)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/Dockerfile.web
