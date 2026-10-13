@@ -2,7 +2,7 @@
 # This pinned SDK is AMD64-only. Only the compiler stage uses emulation on Apple Silicon;
 # its WASM output is portable, and Node/nginx/API run natively on ARM64.
 ARG WASM_BUILD_PLATFORM=linux/amd64
-FROM --platform=${WASM_BUILD_PLATFORM} emscripten/emsdk:3.1.74 AS wasm-build
+FROM --platform=${WASM_BUILD_PLATFORM} emscripten/emsdk:6.0.12 AS wasm-build
 WORKDIR /src
 COPY CMakeLists.txt ./
 COPY engine ./engine
