@@ -1,0 +1,15 @@
+build/
+node_modules/
+dist/
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.tsbuildinfo
+.DS_Store
+.env
+data/
+web/public/dsp.js
+web/public/dsp.wasm
+test-results/
+playwright-report/

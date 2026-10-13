@@ -1,0 +1,38 @@
+# syntax=docker/dockerfile:1
+FROM debian:bookworm-slim AS engine-build
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cmake make g++ pkg-config libsndfile1-dev && rm -rf /var/lib/apt/lists/*
+WORKDIR /src
+COPY CMakeLists.txt ./
+COPY engine ./engine
+RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+    && cmake --build build -j2 && ctest --test-dir build --output-on-failure
+
+FROM engine-build AS engine-test
+CMD ["ctest", "--test-dir", "build", "--output-on-failure"]
+
+FROM python:3.12-slim-bookworm AS api
+RUN apt-get update && apt-get install -y --no-install-recommends libsndfile1 \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --uid 10001 --create-home pulsemix \
+    && mkdir -p /data && chown pulsemix:pulsemix /data
+WORKDIR /app
+COPY api/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+COPY --from=engine-build /src/build/pulsemix /usr/local/bin/pulsemix
+COPY api/app ./app
+ENV PULSEMIX_DATA_DIR=/data PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+USER pulsemix
+EXPOSE 8000
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+FROM api AS api-dev
+USER root
+COPY api/requirements-dev.txt ./requirements-dev.txt
+RUN pip install --no-cache-dir -r requirements-dev.txt
+USER pulsemix
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+FROM api-dev AS api-test
+COPY api/tests ./tests
+CMD ["python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "tests"]
