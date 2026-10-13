@@ -11,7 +11,7 @@ RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
 FROM engine-build AS engine-test
 CMD ["ctest", "--test-dir", "build", "--output-on-failure"]
 
-FROM python:3.12-slim-bookworm AS api
+FROM python:3.14-slim-bookworm AS api
 RUN apt-get update && apt-get install -y --no-install-recommends libsndfile1 \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --uid 10001 --create-home pulsemix \
